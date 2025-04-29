@@ -39,7 +39,7 @@ export function FitnessForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fitnessLevel: "beginner",
+      fitnessLevel: undefined,
       height: 170,
       weight: 70,
       goalWeight: 70,
@@ -91,26 +91,53 @@ export function FitnessForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                       className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="beginner" />
+                          <RadioGroupItem 
+                            value="beginner" 
+                            id="beginner"
+                            className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                          />
                         </FormControl>
-                        <FormLabel className="font-normal">Beginner</FormLabel>
+                        <FormLabel 
+                          htmlFor="beginner" 
+                          className="font-normal cursor-pointer data-[state=checked]:text-orange-500"
+                        >
+                          Beginner
+                        </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="intermediate" />
+                          <RadioGroupItem 
+                            value="intermediate" 
+                            id="intermediate"
+                            className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                          />
                         </FormControl>
-                        <FormLabel className="font-normal">Intermediate</FormLabel>
+                        <FormLabel 
+                          htmlFor="intermediate" 
+                          className="font-normal cursor-pointer data-[state=checked]:text-orange-500"
+                        >
+                          Intermediate
+                        </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="advanced" />
+                          <RadioGroupItem 
+                            value="advanced" 
+                            id="advanced"
+                            className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                          />
                         </FormControl>
-                        <FormLabel className="font-normal">Advanced</FormLabel>
+                        <FormLabel 
+                          htmlFor="advanced" 
+                          className="font-normal cursor-pointer data-[state=checked]:text-orange-500"
+                        >
+                          Advanced
+                        </FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
