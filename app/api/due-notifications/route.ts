@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { prisma } from "@/lib/prisma"
+import { prisma } from "../../../lib/prisma"
 
 // Returns users who are due to be emailed now.
 // For simplicity, this currently returns all rows that have both workout AND calories.
@@ -32,4 +32,5 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 })
   }
 }
+
 
