@@ -1,6 +1,7 @@
 "use server"
 
 import type { FitnessFormData } from "@/components/fitness-form"
+import { upsertPlanNotification } from "@/lib/notifications"
 
 type WorkoutPlanResult =
   | { success: true; plan: string }
@@ -15,6 +16,7 @@ type CalorieFormData = {
   goal: "lose" | "maintain" | "gain"
   dietaryPrefs?: string
   mealsPerDay: number
+  email?: string
 }
 
 export async function generateWorkoutPlan(formData: FitnessFormData): Promise<WorkoutPlanResult> {
@@ -23,7 +25,7 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
       return { success: false, error: "GROQ_API_KEY is not set in the environment." }
     }
     const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant"
-    const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo } = formData
+    const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo, email } = formData
 
     const goalMap = {
       loseWeight: "lose weight",
@@ -114,6 +116,14 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
       return { success: false, error: "No response from Groq API." }
     }
 
+    if (email) {
+      // Store the workout plan so notifications can be sent later
+      await upsertPlanNotification({
+        email,
+        workout: plan,
+      })
+    }
+
     return { success: true, plan }
   } catch (error) {
     console.error("Error generating workout plan:", error)
@@ -128,7 +138,7 @@ export async function generateCaloriePlan(formData: CalorieFormData): Promise<Wo
       return { success: false, error: "GROQ_API_KEY is not set in the environment." }
     }
     const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant"
-    const { age, gender, height, weight, activityLevel, goal, dietaryPrefs, mealsPerDay } = formData
+    const { age, gender, height, weight, activityLevel, goal, dietaryPrefs, mealsPerDay, email } = formData
 
     const prompt = `
 Give a concise nutrition plan in markdown.
@@ -186,6 +196,14 @@ For each meal, list 2-3 food ideas with portions.
     if (!plan || !plan.trim()) {
       return { success: false, error: "No response from Groq API." }
     }
+
+    if (email) {
+      await upsertPlanNotification({
+        email,
+        calories: plan,
+      })
+    }
+
     return { success: true, plan }
   } catch (error) {
     console.error("Error generating calorie plan:", error)
