@@ -1,7 +1,6 @@
 "use server"
 
 import type { FitnessFormData } from "@/components/fitness-form"
-const fetch: any = (...args: any[]) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 export async function generateWorkoutPlan(formData: FitnessFormData): Promise<string> {
   try {
@@ -96,6 +95,8 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<st
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini API."
   } catch (error) {
     console.error("Error generating workout plan:", error)
-    throw new Error("Failed to generate workout plan. Please try again later.")
+    // Surface a user-friendly error so the client UI can show feedback
+    const message = error instanceof Error ? error.message : "Unknown error"
+    throw new Error("Failed to generate workout plan. " + message)
   }
 }
