@@ -27,13 +27,43 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<st
       - Primary goal: ${goalMap[gymGoal as keyof typeof goalMap]}
       ${additionalInfo ? `- Additional information: ${additionalInfo}` : ""}
 
-      Please provide:
-      1. A weekly workout schedule with specific exercises, sets, reps, and rest periods
-      2. Nutrition recommendations to support their goals
-      3. Tips for tracking progress
-      4. Any modifications needed based on their fitness level
+      IMPORTANT: Format your response EXACTLY as follows using markdown:
 
-      Format the response in markdown with clear sections and bullet points.
+      ## Weekly Workout Schedule
+
+      **Day 1: [Day Name]**
+      - Exercise 1: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+      - Exercise 2: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+      - Exercise 3: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+
+      **Day 2: [Day Name]**
+      - Exercise 1: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+      - Exercise 2: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+      - Exercise 3: [Name] - [Sets] sets x [Reps] reps, [Rest] rest
+
+      [Continue for all workout days...]
+
+      ## Nutrition Recommendations
+
+      - [Recommendation 1]
+      - [Recommendation 2]
+      - [Recommendation 3]
+      - [Continue with more recommendations...]
+
+      ## Progress Tracking Tips
+
+      - [Tip 1]
+      - [Tip 2]
+      - [Tip 3]
+      - [Continue with more tips...]
+
+      ## Modifications for ${fitnessLevel} Level
+
+      - [Modification 1]
+      - [Modification 2]
+      - [Modification 3]
+
+      Use this EXACT structure for all fitness levels. Be consistent with formatting, bullet points, and section headers.
     `
 
     const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + process.env.GEMINI_API_KEY, {
