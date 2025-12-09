@@ -10,7 +10,7 @@ import remarkGfm from "remark-gfm"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -25,6 +25,7 @@ const formSchema = z.object({
   goal: z.enum(["lose", "maintain", "gain"]),
   dietaryPrefs: z.string().optional(),
   mealsPerDay: z.coerce.number().min(2).max(6),
+  email: z.string().email("Enter a valid email").optional(),
 })
 
 export function CalorieForm() {
@@ -43,6 +44,7 @@ export function CalorieForm() {
       goal: "maintain",
       dietaryPrefs: "",
       mealsPerDay: 3,
+      email: "",
     },
   })
 
@@ -108,6 +110,27 @@ export function CalorieForm() {
                         className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (to receive your plan)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Optional, but required for email reminders.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
