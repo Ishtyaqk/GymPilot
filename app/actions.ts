@@ -11,7 +11,7 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
     if (!process.env.GROQ_API_KEY) {
       return { success: false, error: "GROQ_API_KEY is not set in the environment." }
     }
-    const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile"
+    const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant"
     const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo } = formData
 
     const goalMap = {
