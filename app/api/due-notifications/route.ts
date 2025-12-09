@@ -1,27 +1,35 @@
 import { NextResponse } from "next/server"
 
-// Temporary mock endpoint so n8n has a valid resource to call.
-// Replace the mock data with your own DB-backed lookup that returns
-// only the users who should receive an email right now.
-export async function GET() {
-  const data: Array<{
-    id: string
-    userEmail: string
-    subject?: string
-    workout: string
-    calories: string
-    nextDay: number
-  }> = [
-    {
-      id: "demo-plan-1",
-      userEmail: "user@example.com",
-      subject: "Day 1: Workout + Calories",
-      workout: "## Workout\n- Squats 3x10\n- Pushups 3x12",
-      calories: "## Calories & Macros\n- Calories: 2200 kcal\n- Protein: 150g\n- Carbs: 230g\n- Fats: 70g",
-      nextDay: 1,
-    },
-  ]
+import { prisma } from "@/lib/prisma"
 
-  return NextResponse.json(data)
+// Returns users who are due to be emailed now.
+// For simplicity, this currently returns all rows that have both workout AND calories.
+// Add time-window filtering as needed (e.g., only at 07:00 IST).
+export async function GET() {
+  try {
+    const rows = await prisma.planNotification.findMany({
+      where: {
+        email: { not: "" },
+        workout: { not: null },
+        calories: { not: null },
+      },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+    })
+
+    const data = rows.map((row) => ({
+      id: row.id,
+      userEmail: row.email,
+      subject: `Day ${row.nextDay}: Workout + Calories`,
+      workout: row.workout ?? "",
+      calories: row.calories ?? "",
+      nextDay: row.nextDay,
+    }))
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error("due-notifications error:", error)
+    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 })
+  }
 }
 
