@@ -1,0 +1,23 @@
+// Prisma schema for plan notifications
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PlanNotification {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  workout       String?
+  calories      String?
+  nextDay       Int      @default(1)
+  timezone      String   @default("Asia/Kolkata")
+  scheduleStart DateTime @default(now())
+  lastSentAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
