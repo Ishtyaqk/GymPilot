@@ -8,8 +8,8 @@ type WorkoutPlanResult =
 
 export async function generateWorkoutPlan(formData: FitnessFormData): Promise<WorkoutPlanResult> {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return { success: false, error: "GEMINI_API_KEY is not set in the environment." }
+    if (!process.env.GROQ_API_KEY) {
+      return { success: false, error: "GROQ_API_KEY is not set in the environment." }
     }
     const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo } = formData
 
@@ -69,44 +69,34 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
       Use this EXACT structure for all fitness levels. Be consistent with formatting, bullet points, and section headers.
     `
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" +
-        process.env.GEMINI_API_KEY,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 1,
-            topP: 1,
-            maxOutputTokens: 2048,
-          },
-          safetySettings: [
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_NONE" },
-          ],
-        }),
-      }
-    )
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-70b-versatile",
+        messages: [
+          { role: "system", content: "You are a helpful fitness coach that replies in structured markdown." },
+          { role: "user", content: prompt.trim() },
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+    })
 
     if (!response.ok) {
       const text = await response.text()
-      console.error("Gemini API error:", text)
-      return { success: false, error: "Failed to fetch from Gemini API. Please try again later." }
+      console.error("Groq API error:", text)
+      return { success: false, error: "Failed to fetch from Groq API. Please try again later." }
     }
 
     const data: any = await response.json()
-    const plan = data.candidates?.[0]?.content?.parts?.[0]?.text
+    const plan = data.choices?.[0]?.message?.content
 
     if (!plan) {
-      return { success: false, error: "No response from Gemini API." }
+      return { success: false, error: "No response from Groq API." }
     }
 
     return { success: true, plan }
