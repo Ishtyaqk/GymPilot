@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-// Temporary mock endpoint that pretends to mark a notification as sent.
-// Replace with your DB update logic (set nextDay, lastSentAt, etc.).
+import { prisma } from "@/lib/prisma"
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const { id, nextDay } = body as { id?: string; nextDay?: number }
@@ -10,7 +10,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing id or nextDay" }, { status: 400 })
   }
 
-  // TODO: persist the update in your data store
-  return NextResponse.json({ ok: true })
+  try {
+    await prisma.planNotification.update({
+      where: { id },
+      data: { nextDay, lastSentAt: new Date() },
+    })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error("mark-sent error:", error)
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 })
+  }
 }
 
