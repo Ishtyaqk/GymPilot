@@ -6,6 +6,17 @@ type WorkoutPlanResult =
   | { success: true; plan: string }
   | { success: false; error: string }
 
+type CalorieFormData = {
+  age: number
+  gender: "male" | "female" | "other"
+  height: number
+  weight: number
+  activityLevel: "sedentary" | "light" | "moderate" | "active" | "athlete"
+  goal: "lose" | "maintain" | "gain"
+  dietaryPrefs?: string
+  mealsPerDay: number
+}
+
 export async function generateWorkoutPlan(formData: FitnessFormData): Promise<WorkoutPlanResult> {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -108,5 +119,77 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
     console.error("Error generating workout plan:", error)
     const message = error instanceof Error ? error.message : "Unknown error"
     return { success: false, error: "Failed to generate workout plan. " + message }
+  }
+}
+
+export async function generateCaloriePlan(formData: CalorieFormData): Promise<WorkoutPlanResult> {
+  try {
+    if (!process.env.GROQ_API_KEY) {
+      return { success: false, error: "GROQ_API_KEY is not set in the environment." }
+    }
+    const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant"
+    const { age, gender, height, weight, activityLevel, goal, dietaryPrefs, mealsPerDay } = formData
+
+    const prompt = `
+Give a concise nutrition plan in markdown.
+
+## Profile
+- Age: ${age}
+- Gender: ${gender}
+- Height: ${height} cm
+- Weight: ${weight} kg
+- Activity level: ${activityLevel}
+- Goal: ${goal === "lose" ? "fat loss" : goal === "gain" ? "muscle gain" : "maintenance"}
+${dietaryPrefs ? `- Dietary preferences: ${dietaryPrefs}` : ""}
+
+## Daily Calories & Macros
+- Calories: [number] kcal
+- Protein: [grams]
+- Carbs: [grams]
+- Fats: [grams]
+
+## Meal Outline (${mealsPerDay} meals)
+For each meal, list 2-3 food ideas with portions.
+
+## Tips
+- 3-5 short bullets on hydration, fiber, timing, and adjustments.
+    `.trim()
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "You are a concise nutrition coach." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 800,
+      }),
+    })
+
+    if (!response.ok) {
+      const text = await response.text()
+      console.error("Groq API error (calorie):", response.status, text)
+      return {
+        success: false,
+        error: `Failed to fetch from Groq API (status ${response.status}). ${text || "Please try again later."}`,
+      }
+    }
+
+    const data: any = await response.json()
+    const plan = data.choices?.[0]?.message?.content
+    if (!plan || !plan.trim()) {
+      return { success: false, error: "No response from Groq API." }
+    }
+    return { success: true, plan }
+  } catch (error) {
+    console.error("Error generating calorie plan:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
+    return { success: false, error: "Failed to generate calorie plan. " + message }
   }
 }
