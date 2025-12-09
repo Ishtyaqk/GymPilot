@@ -2,10 +2,14 @@
 
 import type { FitnessFormData } from "@/components/fitness-form"
 
-export async function generateWorkoutPlan(formData: FitnessFormData): Promise<string> {
+type WorkoutPlanResult =
+  | { success: true; plan: string }
+  | { success: false; error: string }
+
+export async function generateWorkoutPlan(formData: FitnessFormData): Promise<WorkoutPlanResult> {
   try {
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not set in the environment.")
+      return { success: false, error: "GEMINI_API_KEY is not set in the environment." }
     }
     const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo } = formData
 
@@ -65,38 +69,50 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<st
       Use this EXACT structure for all fitness levels. Be consistent with formatting, bullet points, and section headers.
     `
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + process.env.GEMINI_API_KEY, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 1,
-          topP: 1,
-          maxOutputTokens: 2048
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" +
+        process.env.GEMINI_API_KEY,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        safetySettings: [
-          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_NONE" }
-        ]
-      })
-    })
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 1,
+            topP: 1,
+            maxOutputTokens: 2048,
+          },
+          safetySettings: [
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_NONE" },
+          ],
+        }),
+      }
+    )
 
     if (!response.ok) {
-      throw new Error("Failed to fetch from Gemini API: " + (await response.text()))
+      const text = await response.text()
+      console.error("Gemini API error:", text)
+      return { success: false, error: "Failed to fetch from Gemini API. Please try again later." }
     }
+
     const data: any = await response.json()
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini API."
+    const plan = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!plan) {
+      return { success: false, error: "No response from Gemini API." }
+    }
+
+    return { success: true, plan }
   } catch (error) {
     console.error("Error generating workout plan:", error)
-    // Surface a user-friendly error so the client UI can show feedback
     const message = error instanceof Error ? error.message : "Unknown error"
-    throw new Error("Failed to generate workout plan. " + message)
+    return { success: false, error: "Failed to generate workout plan. " + message }
   }
 }
