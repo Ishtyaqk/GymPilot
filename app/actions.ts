@@ -11,6 +11,7 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
     if (!process.env.GROQ_API_KEY) {
       return { success: false, error: "GROQ_API_KEY is not set in the environment." }
     }
+    const model = process.env.GROQ_MODEL || "llama-3.1-70b-versatile"
     const { fitnessLevel, height, weight, goalWeight, workoutDays, gymGoal, additionalInfo } = formData
 
     const goalMap = {
@@ -76,7 +77,7 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.1-70b-versatile",
+        model,
         messages: [
           { role: "system", content: "You are a helpful fitness coach that replies in structured markdown." },
           { role: "user", content: prompt.trim() },
@@ -88,8 +89,11 @@ export async function generateWorkoutPlan(formData: FitnessFormData): Promise<Wo
 
     if (!response.ok) {
       const text = await response.text()
-      console.error("Groq API error:", text)
-      return { success: false, error: "Failed to fetch from Groq API. Please try again later." }
+      console.error("Groq API error:", response.status, text)
+      return {
+        success: false,
+        error: `Failed to fetch from Groq API (status ${response.status}). ${text || "Please try again later."}`,
+      }
     }
 
     const data: any = await response.json()
