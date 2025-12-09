@@ -54,8 +54,12 @@ export function FitnessForm() {
     setIsLoading(true)
     setError(null)
     try {
-      const plan = await generateWorkoutPlan(values)
-      setWorkoutPlan(plan)
+      const result = await generateWorkoutPlan(values)
+      if (result.success) {
+        setWorkoutPlan(result.plan)
+      } else {
+        setError(result.error ?? "Something went wrong. Please try again.")
+      }
     } catch (error) {
       console.error("Error generating workout plan:", error)
       const message = error instanceof Error ? error.message : "Something went wrong. Please try again."
