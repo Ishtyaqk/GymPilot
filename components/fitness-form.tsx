@@ -27,6 +27,7 @@ const formSchema = z.object({
     .max(250, "Goal weight must be less than 250kg"),
   workoutDays: z.coerce.number().min(1, "Must work out at least 1 day").max(7, "Cannot exceed 7 days"),
   gymGoal: z.enum(["loseWeight", "buildMuscle", "improveEndurance", "increaseStrength"]),
+  email: z.string().email("Enter a valid email").optional(),
   additionalInfo: z.string().optional(),
 })
 
@@ -40,6 +41,7 @@ export function FitnessForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      email: "",
       fitnessLevel: undefined,
       height: 170,
       weight: 70,
@@ -95,6 +97,26 @@ export function FitnessForm() {
         )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email (to receive your plan)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      {...field}
+                      className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-zinc-200">Optional, but required for email reminders.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="fitnessLevel"
