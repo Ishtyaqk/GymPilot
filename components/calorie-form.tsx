@@ -5,6 +5,8 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Loader2, Salad } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -81,12 +83,12 @@ export function CalorieForm() {
           </div>
         )}
         {result && (
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm prose prose-invert">
-            {result.split("\n").map((line, i) => (
-              <p key={i} className="mb-2 whitespace-pre-wrap">
-                {line}
-              </p>
-            ))}
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm">
+            <div className="prose prose-invert max-w-none text-sm">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {result}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
 
@@ -100,7 +102,11 @@ export function CalorieForm() {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -114,11 +120,11 @@ export function CalorieForm() {
                     <FormLabel>Gender</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
                         <SelectItem value="male">Male</SelectItem>
                         <SelectItem value="female">Female</SelectItem>
                         <SelectItem value="other">Other / Prefer not to say</SelectItem>
@@ -135,7 +141,11 @@ export function CalorieForm() {
                   <FormItem>
                     <FormLabel>Height (cm)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,7 +158,11 @@ export function CalorieForm() {
                   <FormItem>
                     <FormLabel>Weight (kg)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,11 +178,11 @@ export function CalorieForm() {
                   <FormLabel>Activity Level</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
                         <SelectValue placeholder="Select activity level" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
                       <SelectItem value="sedentary">Sedentary</SelectItem>
                       <SelectItem value="light">Lightly Active</SelectItem>
                       <SelectItem value="moderate">Moderately Active</SelectItem>
@@ -189,11 +203,11 @@ export function CalorieForm() {
                   <FormLabel>Goal</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
                         <SelectValue placeholder="Select goal" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
                       <SelectItem value="lose">Lose Fat</SelectItem>
                       <SelectItem value="maintain">Maintain</SelectItem>
                       <SelectItem value="gain">Gain Muscle</SelectItem>
@@ -212,7 +226,11 @@ export function CalorieForm() {
                   <FormItem>
                     <FormLabel>Meals Per Day</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                    <Input
+                      type="number"
+                      {...field}
+                      className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                    />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -225,7 +243,11 @@ export function CalorieForm() {
                   <FormItem>
                     <FormLabel>Dietary Preferences / Restrictions</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., vegetarian, halal, lactose-free" {...field} />
+                    <Textarea
+                      placeholder="e.g., vegetarian, halal, lactose-free"
+                      {...field}
+                      className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                    />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
