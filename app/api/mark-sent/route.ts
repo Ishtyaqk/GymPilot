@@ -13,13 +13,20 @@ export async function POST(req: Request) {
   try {
     await prisma.planNotification.update({
       where: { id },
-      data: { nextDay, lastSentAt: new Date() },
+      data: { nextDay: Number(nextDay), lastSentAt: new Date() },
     })
     return NextResponse.json({ ok: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error("mark-sent error:", error)
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 })
+    // Return more details in development, generic in production
+    const errorMessage = error?.code === 'P2025' 
+      ? `Record with id ${id} not found`
+      : error?.message || "Failed to update"
+    return NextResponse.json({ 
+      error: errorMessage,
+      code: error?.code,
+      received: { id, nextDay }
+    }, { status: 500 })
   }
 }
-
 
