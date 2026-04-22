@@ -17,7 +17,7 @@ export default function Home() {
               AI Fitness Routine Generator
             </h1>
             <p className="mt-4 text-lg text-zinc-300 drop-shadow">
-              Get a personalized workout plan powered by Gemini AI
+              Build a more tailored workout plan with Groq-powered coaching
             </p>
           </div>
           <div className="rounded-2xl bg-zinc-900/80 shadow-2xl ring-1 ring-zinc-800 backdrop-blur-md p-6 md:p-10">
