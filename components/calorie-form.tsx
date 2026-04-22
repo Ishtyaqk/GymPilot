@@ -16,6 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { generateCaloriePlan } from "@/app/actions"
 
+const optionalEmailSchema = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().email("Enter a valid email").optional(),
+)
+
 const formSchema = z.object({
   age: z.coerce.number().min(13).max(100),
   gender: z.enum(["male", "female", "other"]),
@@ -24,16 +29,23 @@ const formSchema = z.object({
   activityLevel: z.enum(["sedentary", "light", "moderate", "active", "athlete"]),
   goal: z.enum(["lose", "maintain", "gain"]),
   dietaryPrefs: z.string().optional(),
+  preferredFoods: z.string().max(240, "Keep preferred foods under 240 characters").optional(),
+  avoidFoods: z.string().max(240, "Keep avoid foods under 240 characters").optional(),
+  budget: z.enum(["low", "moderate", "flexible"]),
+  cookingTime: z.enum(["quick", "moderate", "flexible"]),
   mealsPerDay: z.coerce.number().min(2).max(6),
-  email: z.string().email("Enter a valid email").optional(),
+  email: optionalEmailSchema,
 })
+
+type CalorieFormInput = z.input<typeof formSchema>
+export type CalorieFormData = z.output<typeof formSchema>
 
 export function CalorieForm() {
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<CalorieFormInput, any, CalorieFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       age: 30,
@@ -43,12 +55,16 @@ export function CalorieForm() {
       activityLevel: "moderate",
       goal: "maintain",
       dietaryPrefs: "",
+      preferredFoods: "",
+      avoidFoods: "",
+      budget: "moderate",
+      cookingTime: "moderate",
       mealsPerDay: 3,
       email: "",
     },
   })
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: CalorieFormData) {
     setIsLoading(true)
     setError(null)
     setResult(null)
@@ -124,7 +140,11 @@ export function CalorieForm() {
                       <Input
                         type="email"
                         placeholder="you@example.com"
-                        {...field}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        onChange={field.onChange}
+                        ref={field.ref}
+                        value={typeof field.value === "string" ? field.value : ""}
                         className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
                       />
                     </FormControl>
@@ -261,6 +281,53 @@ export function CalorieForm() {
               />
               <FormField
                 control={form.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Food Budget</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
+                          <SelectValue placeholder="Select budget" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
+                        <SelectItem value="low">Budget-Friendly</SelectItem>
+                        <SelectItem value="moderate">Balanced</SelectItem>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="cookingTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cooking Time</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
+                          <SelectValue placeholder="Select cooking time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
+                        <SelectItem value="quick">Mostly 15-20 min meals</SelectItem>
+                        <SelectItem value="moderate">Up to 35 min meals</SelectItem>
+                        <SelectItem value="flexible">Flexible cooking time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="dietaryPrefs"
                 render={({ field }) => (
                   <FormItem>
@@ -272,6 +339,50 @@ export function CalorieForm() {
                       className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
                     />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="preferredFoods"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Foods You Enjoy (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., eggs, oats, paneer, rice bowls, chicken wraps"
+                        {...field}
+                        className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Helps the meal plan feel more realistic for your routine.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="avoidFoods"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Foods to Avoid (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., shellfish, whey, mushrooms, spicy food"
+                        {...field}
+                        className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Used for dislikes, allergies, and foods you do not want repeated.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -294,4 +405,3 @@ export function CalorieForm() {
     </Card>
   )
 }
-
