@@ -17,7 +17,7 @@ export default function CalorieTracker() {
               AI Calorie Tracker
             </h1>
             <p className="mt-4 text-lg text-zinc-300 drop-shadow">
-              Get a personalized nutrition and meal plan powered by Gemini AI
+              Get a more practical meal plan with Groq-powered nutrition coaching
             </p>
           </div>
           <div className="rounded-2xl bg-zinc-900/80 shadow-2xl ring-1 ring-zinc-800 backdrop-blur-md p-6 md:p-10">
