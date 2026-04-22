@@ -17,7 +17,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { generateWorkoutPlan } from "@/app/actions"
 import { WorkoutResults } from "@/components/workout-results"
 
+const optionalEmailSchema = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().email("Enter a valid email").optional(),
+)
+
 const formSchema = z.object({
+  age: z.coerce.number().min(13, "Age must be at least 13").max(80, "Age must be 80 or less"),
   fitnessLevel: z.enum(["beginner", "intermediate", "advanced"]),
   height: z.coerce.number().min(100, "Height must be at least 100cm").max(250, "Height must be less than 250cm"),
   weight: z.coerce.number().min(30, "Weight must be at least 30kg").max(250, "Weight must be less than 250kg"),
@@ -26,33 +32,48 @@ const formSchema = z.object({
     .min(30, "Goal weight must be at least 30kg")
     .max(250, "Goal weight must be less than 250kg"),
   workoutDays: z.coerce.number().min(1, "Must work out at least 1 day").max(7, "Cannot exceed 7 days"),
+  workoutDuration: z.coerce
+    .number()
+    .min(20, "Workout duration must be at least 20 minutes")
+    .max(180, "Workout duration must be 180 minutes or less"),
   gymGoal: z.enum(["loseWeight", "buildMuscle", "improveEndurance", "increaseStrength"]),
-  email: z.string().email("Enter a valid email").optional(),
+  workoutLocation: z.enum(["fullGym", "home", "hybrid"]),
+  email: optionalEmailSchema,
+  equipmentAccess: z.string().max(200, "Keep equipment notes under 200 characters").optional(),
+  injuries: z.string().max(240, "Keep limitations under 240 characters").optional(),
+  exercisePreferences: z.string().max(240, "Keep preferences under 240 characters").optional(),
   additionalInfo: z.string().optional(),
 })
 
-export type FitnessFormData = z.infer<typeof formSchema>
+type FitnessFormInput = z.input<typeof formSchema>
+export type FitnessFormData = z.output<typeof formSchema>
 
 export function FitnessForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [workoutPlan, setWorkoutPlan] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FitnessFormInput, any, FitnessFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      age: 28,
       email: "",
       fitnessLevel: undefined,
       height: 170,
       weight: 70,
       goalWeight: 70,
       workoutDays: 3,
+      workoutDuration: 60,
       gymGoal: "buildMuscle",
+      workoutLocation: "fullGym",
+      equipmentAccess: "",
+      injuries: "",
+      exercisePreferences: "",
       additionalInfo: "",
     },
   })
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FitnessFormData) {
     setIsLoading(true)
     setError(null)
     try {
@@ -97,25 +118,52 @@ export function FitnessForm() {
         )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email (to receive your plan)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      {...field}
-                      className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-zinc-200">Optional, but required for email reminders.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-6 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (to receive your plan)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        onChange={field.onChange}
+                        ref={field.ref}
+                        value={typeof field.value === "string" ? field.value : ""}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">Optional, but required for email reminders.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Helps tune recovery, intensity, and progression.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -211,6 +259,52 @@ export function FitnessForm() {
               />
             </div>
 
+            <div className="grid gap-6 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="workoutLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Where Will You Train?</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500">
+                          <SelectValue placeholder="Select your workout setup" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-zinc-900 text-white border border-zinc-700">
+                        <SelectItem value="fullGym">Full Gym</SelectItem>
+                        <SelectItem value="home">Home / Minimal Equipment</SelectItem>
+                        <SelectItem value="hybrid">Hybrid Gym + Home</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="workoutDuration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workout Duration (minutes)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        className="bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Keeps each session realistic for your schedule.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="goalWeight"
@@ -286,6 +380,71 @@ export function FitnessForm() {
                   </FormControl>
                   <FormDescription className="text-zinc-200">
                     Include any relevant information that might help create a better workout plan for you.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+                )}
+              />
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="equipmentAccess"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipment You Have (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., barbell, bench, dumbbells up to 20kg, treadmill"
+                        className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Helps avoid plans that assume machines or gear you do not have.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="exercisePreferences"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Exercise Preferences (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., prefer dumbbells, enjoy circuits, avoid burpees"
+                        className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-zinc-200">
+                      Share exercises or training styles you like or dislike.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="injuries"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Injuries or Limitations (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g., bad knees, lower-back sensitivity, shoulder impingement"
+                      className="resize-none bg-zinc-900 text-white border border-zinc-700 placeholder:text-zinc-400 focus:ring-orange-500 focus:border-orange-500"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-zinc-200">
+                    The plan will swap out risky movements and suggest safer alternatives.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
